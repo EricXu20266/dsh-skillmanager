@@ -11,7 +11,6 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import { load as yamlLoad, dump as yamlDump } from 'js-yaml'
-import type { SkillSummary, SkillDefinition } from '@deepseek-ai/dsh-skill'
 import { sendJson, sameOrigin } from './http.ts'
 
 export interface WebServerService {
@@ -45,13 +44,21 @@ interface FrontmatterDoc {
   content: string
 }
 
-/** Parse a SKILL.md-style document: leading --- YAML frontmatter + body. */
+/** Parse a SKILL.md-style document: leading --- YAML frontmatter + body.
+ *  逐行扫描关闭符（避免正文中整行 --- 误判），与 DHS skill-filesystem 一致。 */
 function parseFrontmatter(raw: string): FrontmatterDoc {
   if (!raw.startsWith('---')) return { data: {}, content: raw }
-  const end = raw.indexOf('\n---', 3)
+  const lines = raw.split('\n')
+  let end = -1
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '---') {
+      end = i
+      break
+    }
+  }
   if (end === -1) return { data: {}, content: raw }
-  const yamlText = raw.slice(3, end)
-  const body = raw.slice(end + 4)
+  const yamlText = lines.slice(1, end).join('\n')
+  const body = lines.slice(end + 1).join('\n')
   let data: Record<string, unknown> = {}
   try {
     const parsed = yamlLoad(yamlText) as unknown
@@ -60,6 +67,29 @@ function parseFrontmatter(raw: string): FrontmatterDoc {
     data = {}
   }
   return { data, content: body }
+}
+
+/** 按 DHS skill-filesystem 语义读取 invocation 策略（顶层 kebab-case）：
+ *  modelInvocable = disable-model-invocation !== true
+ *  userInvocable  = user-invocable !== false
+ *  兼容旧的嵌套 invocation 对象读取。 */
+function readInvocation(data: Record<string, unknown>): { modelInvocable: boolean; userInvocable: boolean } {
+  const nested = (data.invocation ?? {}) as Record<string, unknown>
+  const dmi = data['disable-model-invocation']
+  const ui = data['user-invocable']
+  return {
+    modelInvocable: typeof dmi === 'boolean' ? !dmi
+      : typeof nested.modelInvocable === 'boolean' ? nested.modelInvocable : true,
+    userInvocable: typeof ui === 'boolean' ? ui
+      : typeof nested.userInvocable === 'boolean' ? nested.userInvocable : true,
+  }
+}
+
+/** 按 DHS 语义写入 invocation 策略（顶层 kebab-case），并清理旧嵌套 invocation。 */
+function writeInvocation(data: Record<string, unknown>, invocation: { modelInvocable: boolean; userInvocable: boolean }): void {
+  data['disable-model-invocation'] = !invocation.modelInvocable
+  data['user-invocable'] = invocation.userInvocable
+  delete data.invocation
 }
 
 function renderFrontmatter(doc: FrontmatterDoc): string {
@@ -94,16 +124,12 @@ function scanSkills(): SkillGroupInfo[] {
       try {
         const raw = readFileSync(skillFile, 'utf8')
         const doc = parseFrontmatter(raw)
-        const invocation = (doc.data.invocation ?? {}) as Record<string, unknown>
         const meta = (doc.data.metadata ?? {}) as Record<string, unknown>
         out.push({
           name: typeof doc.data.name === 'string' ? doc.data.name : entry.name,
           description: typeof doc.data.description === 'string' ? doc.data.description : '',
           whenToUse: typeof doc.data.whenToUse === 'string' ? doc.data.whenToUse : undefined,
-          invocation: {
-            modelInvocable: typeof invocation.modelInvocable === 'boolean' ? invocation.modelInvocable : true,
-            userInvocable: typeof invocation.userInvocable === 'boolean' ? invocation.userInvocable : true,
-          },
+          invocation: readInvocation(doc.data),
           source: root.source,
           provider: 'skill-filesystem',
           group: typeof meta.group === 'string' ? meta.group : undefined,
@@ -184,10 +210,9 @@ export function mountSkillManagerRoutes(host: SkillManagerHost): () => void {
           }
           const raw = readFileSync(skill.path, 'utf8')
           const doc = parseFrontmatter(raw)
-          const invocation = (doc.data.invocation ?? {}) as Record<string, unknown>
-          const current = typeof invocation[key] === 'boolean' ? invocation[key] : true
-          invocation[key] = !current
-          doc.data.invocation = invocation
+          const invocation = readInvocation(doc.data)
+          invocation[key] = !invocation[key]
+          writeInvocation(doc.data, invocation)
           writeFileSync(skill.path, renderFrontmatter(doc))
           sendJson(response, 200, { ok: true, name, key, value: invocation[key], path: skill.path })
         } catch (error) {
@@ -239,5 +264,3 @@ export function mountSkillManagerRoutes(host: SkillManagerHost): () => void {
     for (const dispose of disposers) dispose()
   }
 }
-
-export type { SkillSummary, SkillDefinition }

@@ -10,7 +10,7 @@ import { mountSkillManagerRoutes, type SkillManagerHost } from './routes.ts'
 export const name = 'dsh-skillmanager'
 
 export function apply(ctx: Context): void {
-  ctx.inject(['webServer', 'loader', 'skills'], (hostCtx: Context) => {
+  ctx.inject(['webServer', 'loader'], (hostCtx: Context) => {
     const host = hostCtx as unknown as SkillManagerHost
     host.effect(() => mountSkillManagerRoutes(host), 'dsh-skillmanager: http routes')
   })
