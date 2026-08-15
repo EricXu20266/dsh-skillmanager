@@ -11,51 +11,97 @@ import { sourceLabel, SOURCE_ORDER, type SkillInfo, type SkillDetail } from './m
 export const name = 'dsh-skillmanager'
 export const inject = ['slots', 'locale', 'sessions', 'workspaces']
 
-/* ── styles ─────────────────────────────────────────────────────────────── */
+/* ── inline styles (consistent with dsh-discovery / taishen-style panel) ── */
 
-const panelStyle: React.CSSProperties = {
-  position: 'fixed', inset: 0, zIndex: 1000, background: 'var(--dsw-alias-mask, rgba(15,15,30,0.45))',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-}
-const cardStyle: React.CSSProperties = {
-  width: 900, maxWidth: '94vw', height: '82vh', background: 'var(--dsw-alias-surface, #fff)',
-  borderRadius: 14, boxShadow: '0 24px 64px rgba(15,15,30,0.28)', display: 'flex', flexDirection: 'column', overflow: 'hidden',
-}
-const headerStyle: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px',
-  borderBottom: '1px solid var(--dsw-alias-divider, #ececf2)', flexShrink: 0,
-}
-const closeStyle: React.CSSProperties = {
-  border: '1px solid var(--dsw-alias-border, #e0e0ea)', background: 'transparent', borderRadius: 8,
-  width: 28, height: 28, cursor: 'pointer', fontSize: 13, color: '#555',
-}
+/* 卡片操作按钮（小） */
 const btnStyle: React.CSSProperties = {
-  border: '1px solid var(--dsw-alias-border, #d5d5e2)', background: 'var(--dsw-alias-surface, #fff)',
-  borderRadius: 8, padding: '6px 12px', fontSize: 12, cursor: 'pointer', color: '#333',
+  display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '4px 12px', boxSizing: 'border-box',
+  background: 'var(--dsw-alias-button-elevated-fill, #2a2a4a)', border: '1px solid var(--dsw-alias-border-l2, #3a3a5a)',
+  borderRadius: 8, color: 'var(--dsw-alias-label-primary, #e0e0f0)', font: '500 12px system-ui',
+  cursor: 'pointer', transition: 'background-color .15s ease, color .15s ease',
 }
 const primaryBtn: React.CSSProperties = {
   ...btnStyle, background: '#4176e6', borderColor: '#4176e6', color: '#fff',
 }
-const itemStyle: React.CSSProperties = {
-  border: '1px solid var(--dsw-alias-border, #e6e6ee)', borderRadius: 10, padding: '12px 14px', marginBottom: 8,
+/* 侧边栏入口按钮（对齐 dsh-discovery） */
+const sidebarBtnStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 6,
+  width: '100%', height: 38, padding: '8px 16px', boxSizing: 'border-box',
+  background: 'transparent', border: 'none', borderRadius: 12,
+  color: 'var(--dsw-alias-label-primary, #c6c8d4)', font: '500 14px system-ui',
+  lineHeight: '22px', cursor: 'pointer', textAlign: 'left', overflow: 'hidden',
+  transition: 'background-color .15s ease, color .15s ease, transform .15s ease',
 }
-const nameStyle: React.CSSProperties = { fontSize: 13, fontWeight: 600, color: '#1f2328', fontFamily: 'monospace' }
-const descStyle: React.CSSProperties = { fontSize: 12, color: '#57606a', marginTop: 3 }
-const metaStyle: React.CSSProperties = { fontSize: 11, color: 'var(--dsw-alias-label-secondary, #7c7c9c)', marginTop: 4 }
+const btnHoverStyle: React.CSSProperties = {
+  background: 'var(--dsw-alias-interactive-bg-hover, rgba(255,255,255,.06))',
+  color: 'var(--dsw-alias-label-primary, #e0e0f0)',
+}
+const railStyle: React.CSSProperties = {
+  ...sidebarBtnStyle, justifyContent: 'center', width: 36, height: 36, padding: 0, borderRadius: 8,
+  color: 'var(--dsw-alias-label-secondary, #9aa0b4)',
+}
+/* 面板骨架（对齐 dsh-discovery：mask + 居中大横版） */
+const maskStyle: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(8,8,16,.6)', zIndex: 1000 }
+const panelStyle: React.CSSProperties = {
+  position: 'absolute', inset: '28px 32px', maxWidth: 1180, margin: '0 auto',
+  background: 'var(--dsw-alias-bg-layer-1, #14141f)',
+  border: '1px solid var(--dsw-alias-border-l2, #2e2e4a)', borderRadius: 16,
+  boxShadow: '0 24px 64px rgba(0,0,0,.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+}
+const headerStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px',
+  color: 'var(--dsw-alias-label-primary, #e0e0f0)', font: '600 15px system-ui', flexShrink: 0,
+}
+const closeStyle: React.CSSProperties = {
+  marginLeft: 'auto', background: 'var(--dsw-alias-button-elevated-fill, #2a2a4a)',
+  color: 'var(--dsw-alias-label-primary, #e0e0f0)', border: '1px solid var(--dsw-alias-border-l2, #3a3a5a)',
+  borderRadius: 6, padding: '4px 12px', cursor: 'pointer', font: '12px system-ui',
+}
+/* 视图切换 tab（对齐 dsh-discovery 分类 pill） */
+const catStyle: React.CSSProperties = {
+  border: 'none', background: 'transparent', color: 'var(--dsw-alias-label-secondary, #9aa0b4)',
+  fontSize: 12, padding: '4px 12px', borderRadius: 999, cursor: 'pointer',
+  transition: 'background-color .15s ease, color .15s ease',
+}
+const catOnStyle: React.CSSProperties = {
+  ...catStyle, background: 'var(--dsw-alias-bg-layer-2, #2a2a4a)',
+  color: 'var(--dsw-alias-brand-primary, #7aa2ff)', fontWeight: 600,
+}
+/* 列表卡片 */
+const itemStyle: React.CSSProperties = {
+  background: 'var(--dsw-alias-bg-layer-1, #1a1a2b)',
+  border: '1px solid var(--dsw-alias-border-l2, #2e2e4a)', borderRadius: 12, padding: '14px 16px', marginBottom: 10,
+}
+const nameStyle: React.CSSProperties = {
+  fontSize: 14, fontWeight: 600, color: 'var(--dsw-alias-label-primary, #e0e0f0)',
+  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'monospace',
+}
+const descStyle: React.CSSProperties = {
+  fontSize: 12, lineHeight: '18px', color: 'var(--dsw-alias-label-tertiary, #9aa0b4)', marginTop: 6,
+}
+const metaStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: 'var(--dsw-alias-label-secondary, #7c7c9c)', marginTop: 6,
+}
 const badgeStyle: React.CSSProperties = {
-  fontSize: 10, padding: '1px 7px', borderRadius: 9, background: '#eef2ff', color: '#4f46e5', marginRight: 6,
+  fontSize: 10, padding: '1px 7px', borderRadius: 9, background: 'var(--dsw-alias-bg-layer-2, #2a2a4a)',
+  color: 'var(--dsw-alias-brand-primary, #7aa2ff)', border: '1px solid var(--dsw-alias-border-l2, #3a3a5a)',
+}
+const groupBadgeStyle: React.CSSProperties = {
+  fontSize: 10, padding: '1px 7px', borderRadius: 9, background: 'var(--dsw-alias-bg-layer-2, #2a2a4a)',
+  color: 'var(--dsw-alias-label-secondary, #9aa0b4)', border: '1px solid var(--dsw-alias-border-l2, #3a3a5a)',
 }
 const toggleStyle: React.CSSProperties = {
-  border: '1px solid var(--dsw-alias-border, #d5d5e2)', background: 'transparent', borderRadius: 7,
-  padding: '3px 9px', fontSize: 11, cursor: 'pointer', marginLeft: 6,
+  border: '1px solid var(--dsw-alias-border-l2, #3a3a5a)', background: 'transparent', borderRadius: 7,
+  padding: '3px 9px', fontSize: 11, cursor: 'pointer', color: 'var(--dsw-alias-label-secondary, #9aa0b4)',
 }
-const toggleOnStyle: React.CSSProperties = { ...toggleStyle, background: '#e8f7ee', borderColor: '#bbe7cd', color: '#1a7f37' }
-const toggleOffStyle: React.CSSProperties = { ...toggleStyle, background: '#f6f7f9', borderColor: '#e0e0ea', color: '#8b949e' }
+const toggleOnStyle: React.CSSProperties = { ...toggleStyle, background: 'rgba(26,127,55,.18)', borderColor: '#1a7f37', color: '#3fb96f' }
+const toggleOffStyle: React.CSSProperties = { ...toggleStyle, background: 'rgba(255,255,255,.04)', color: '#8b949e' }
 const contentStyle: React.CSSProperties = {
-  marginTop: 8, padding: 10, background: 'var(--dsw-alias-surface-subtle, #f6f7f9)', borderRadius: 8,
-  fontSize: 12, color: '#3a3f4b', whiteSpace: 'pre-wrap', maxHeight: 260, overflowY: 'auto',
+  marginTop: 8, padding: 10, background: 'var(--dsw-alias-bg-layer-2, #1c1c2e)', borderRadius: 8,
+  border: '1px solid var(--dsw-alias-border-l2, #2e2e4a)', fontSize: 12, color: 'var(--dsw-alias-label-secondary, #c6c8d4)',
+  whiteSpace: 'pre-wrap', maxHeight: 260, overflowY: 'auto',
 }
-const emptyStyle: React.CSSProperties = { textAlign: 'center', color: 'var(--dsw-alias-label-secondary, #9aa0b4)', fontSize: 13, padding: 40 }
+const emptyStyle: React.CSSProperties = { textAlign: 'center', color: 'var(--dsw-alias-label-secondary, #9aa0b4)', fontSize: 13, padding: 48 }
 
 /* ── session helper (mirrors dsh-discovery) ─────────────────────────────── */
 
@@ -200,7 +246,7 @@ function SkillPanel({ t, ctx, onClose }: { t: Translate; ctx: DiscoveryClientCon
   // 视图分组
   const renderGroup = (label: string, list: SkillInfo[]): ReactNode => h('div', { key: label },
     h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, margin: '10px 0 6px' } },
-      h('span', { style: { fontSize: 11, fontWeight: 600, color: '#57606a' } }, `${label} (${list.length})`),
+      h('span', { style: { fontSize: 11, fontWeight: 600, color: 'var(--dsw-alias-label-secondary, #9aa0b4)' } }, `${label} (${list.length})`),
       h('span', { style: { flex: 1 } }),
       h('button', { type: 'button', style: btnStyle, onClick: () => batchToggle(list, 'on') }, t('enableAll')),
       h('button', { type: 'button', style: btnStyle, onClick: () => batchToggle(list, 'off') }, t('disableAll')),
@@ -212,7 +258,7 @@ function SkillPanel({ t, ctx, onClose }: { t: Translate; ctx: DiscoveryClientCon
     h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' } },
       h('span', { style: nameStyle }, skill.name),
       h('span', { style: badgeStyle }, skill.provider),
-      skill.group !== undefined && h('span', { style: { fontSize: 10, padding: '1px 7px', borderRadius: 9, background: '#eef2ff', color: '#4f46e5', marginRight: 6 } },
+      skill.group !== undefined && h('span', { style: groupBadgeStyle },
         skill.subgroup !== undefined ? `${skill.group} / ${skill.subgroup}` : skill.group),
       h('span', { style: { flex: 1 } }),
       h('button', { type: 'button', style: btnStyle, onClick: () => setGroup(skill) }, t('setGroup')),
@@ -269,12 +315,12 @@ function SkillPanel({ t, ctx, onClose }: { t: Translate; ctx: DiscoveryClientCon
 
   const viewBtn = (id: 'all' | 'source' | 'group', label: string): ReactNode => h('button', {
     type: 'button',
-    style: view === id ? { ...btnStyle, background: '#4176e6', borderColor: '#4176e6', color: '#fff' } : btnStyle,
+    style: view === id ? catOnStyle : catStyle,
     onClick: () => setView(id),
   }, label)
 
   return h('div', { style: { height: '100%', display: 'flex', flexDirection: 'column', minWidth: 0 } },
-    h('div', { style: { padding: '12px 16px', borderBottom: '1px solid var(--dsw-alias-divider, #ececf2)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' } },
+    h('div', { style: { padding: '12px 16px', borderBottom: '1px solid var(--dsw-alias-border-l2, #2e2e4a)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' } },
       h('button', { type: 'button', style: primaryBtn, onClick: create }, `+ ${t('createSkill')}`),
       h('span', { style: { flex: 1 } }),
       viewBtn('all', t('viewAll')),
@@ -284,7 +330,7 @@ function SkillPanel({ t, ctx, onClose }: { t: Translate; ctx: DiscoveryClientCon
     error !== '' && h('div', { style: emptyStyle }, error),
     skills === null && !error && h('div', { style: emptyStyle }, t('loading')),
     skills !== null && skills.length === 0 && h('div', { style: emptyStyle }, t('empty')),
-    skills !== null && h('div', { style: { flex: 1, overflowY: 'auto', padding: 12 } },
+    skills !== null && h('div', { style: { flex: 1, overflowY: 'auto', padding: '16px 20px 24px' } },
       h('div', { style: { fontSize: 11, color: 'var(--dsw-alias-label-secondary, #7c7c9c)', marginBottom: 8 } }, t('total').replace('{n}', String(skills.length))),
       view === 'all' && all.map(renderSkill),
       view === 'source' && orderedSources.map((source) => renderGroup(sourceLabel(source), bySource.get(source)!)),
@@ -310,6 +356,7 @@ export function apply(ctx: DiscoveryClientContext): void {
 
 function SkillTrigger({ wide, t, ctx }: { wide: boolean; t: Translate; ctx: DiscoveryClientContext }) {
   const [open, setOpen] = useState(false)
+  const [hovered, setHovered] = useState(false)
   const close = (): void => setOpen(false)
   const closeButton = useRef<HTMLButtonElement | null>(null)
 
@@ -321,22 +368,27 @@ function SkillTrigger({ wide, t, ctx }: { wide: boolean; t: Translate; ctx: Disc
   }, [open])
   useEffect(() => { if (open) closeButton.current?.focus() }, [open])
 
-  const style: React.CSSProperties = wide
-    ? { display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', border: 'none', background: 'transparent', borderRadius: 8, cursor: 'pointer', color: 'inherit', fontSize: 13 }
-    : { width: 40, height: 40, border: 'none', background: 'transparent', cursor: 'pointer', color: 'inherit' }
+  const style = wide ? { ...sidebarBtnStyle, ...(hovered ? btnHoverStyle : null) } : railStyle
 
   return h('div', { style: { display: 'contents' } },
-    h('button', { type: 'button', style, title: t('nav'), 'aria-label': t('nav'), onClick: () => setOpen(true) },
+    h('button', {
+      type: 'button',
+      style,
+      title: t('nav'),
+      'aria-label': t('nav'),
+      onMouseEnter: () => setHovered(true),
+      onMouseLeave: () => setHovered(false),
+      onClick: () => setOpen(true),
+    },
       h(SkillIcon),
       wide && h('span', { style: { flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, t('nav')),
     ),
-    open && h('div', { style: panelStyle, onClick: close },
-      h('div', { style: cardStyle, onClick: (e: React.MouseEvent) => e.stopPropagation() },
+    open && h('div', { style: maskStyle, onClick: close },
+      h('div', { style: panelStyle, onClick: (e: React.MouseEvent) => e.stopPropagation() },
         h('div', { style: headerStyle },
           h(SkillIcon),
-          h('span', { style: { fontWeight: 600, fontSize: 14 } }, t('nav')),
+          h('span', null, t('nav')),
           h('span', { style: { fontSize: 11, color: 'var(--dsw-alias-label-secondary, #7c7c9c)', fontWeight: 400 } }, t('subtitle')),
-          h('span', { style: { flex: 1 } }),
           h('button', { ref: closeButton, style: closeStyle, onClick: close, 'aria-label': 'Close' }, '✕'),
         ),
         h('div', { style: { flex: 1, overflowY: 'hidden', padding: '0 4px' } }, h(SkillPanel, { t, ctx, onClose: close })),
