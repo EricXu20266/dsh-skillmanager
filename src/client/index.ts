@@ -165,8 +165,14 @@ function buildCreatePrompt(t: Translate): string {
 
 /* ── components ─────────────────────────────────────────────────────────── */
 
+/** Skill 平面图标：闪电字形（能力/技能激活），currentColor 跟随按钮文字色，与 dsh-discovery 图标体系一致。 */
+const SKILL_ICON_PATH = 'M9 0.5 L3 8 H6.5 L8 13.5 L13 5.5 H9.5 L9 0.5 Z'
+
 function SkillIcon(): ReactNode {
-  return h('span', { style: { width: 16, height: 16, borderRadius: 4, background: '#4176e6', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#fff', flexShrink: 0 } }, 'S')
+  return h('svg', {
+    width: 16, height: 16, viewBox: '0 0 14 14', fill: 'currentColor',
+    xmlns: 'http://www.w3.org/2000/svg', style: { flexShrink: 0 },
+  }, h('path', { d: SKILL_ICON_PATH }))
 }
 
 function SkillPanel({ t, ctx, onClose }: { t: Translate; ctx: DiscoveryClientContext; onClose: () => void }) {
