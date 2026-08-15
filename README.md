@@ -1,5 +1,7 @@
 # dsh-skillmanager
 
+> 🌐 **中文 | [English](README.en.md)**
+
 DSH 技能管理器——以图形化方式查看和管理 DHS 的技能（skill）：列表、分组、启用/禁用、新建引导、LLM 审查。技能的创建与编辑由 host agent（LLM）执行，本插件负责"看得清、管得住"。
 
 ## DHS 的技能管理机制（背景）
