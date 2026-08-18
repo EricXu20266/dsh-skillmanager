@@ -2,6 +2,7 @@
   "name": "dsh-skillmanager",
   "description": "DSH skill manager — list, inspect, enable/disable skills on disk and delegate creation/editing to the host agent. · DSH 技能管理器：列出/查看/启用禁用本机技能，创建与编辑交由 agent 完成。",
   "version": "0.1.0",
+  "repository": "git+https://github.com/EricXu20266/dsh-skillmanager.git",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
